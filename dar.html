@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>📚 بوابة المؤسسة</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+<!-- Firebase (Compat) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+<style>
+:root{
+  --bg:#f9fafc; --text:#1f2937; --muted:#6b7280;
+  --header:linear-gradient(135deg,#10b981,#0ea5e9);
+  --card:#fff; --btn:#10b981; --btnText:#fff;
+  --danger:#ef4444; --edit:#3b82f6;
+  --border:#e5e7eb; --shadow:0 10px 24px rgba(0,0,0,.06); --r:16px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'Tajawal',sans-serif}
+
+/* Header */
+header{
+  background:var(--header); color:#fff; box-shadow:var(--shadow);
+  padding:14px 16px; border-bottom-left-radius:20px; border-bottom-right-radius:20px;
+  display:flex; align-items:center; justify-content:space-between; gap:10px
+}
+header h1{margin:0; font-size:1.26rem; display:flex; gap:.6rem; align-items:center; letter-spacing:.2px}
+.theme-pill{
+  display:inline-flex; align-items:center; gap:.5rem;
+  background:rgba(255,255,255,.15); padding:.5rem .9rem; border-radius:9999px;
+  border:1px solid rgba(255,255,255,.25); cursor:pointer; user-select:none
+}
+.theme-pill i{font-size:.95rem}
+.theme-pill .txt{font-weight:700}
+
+/* Containers & Cards */
+.container{max-width:1100px;margin:0 auto;padding:16px}
+.card{background:var(--card);border-radius:var(--r);padding:1rem 1.2rem;margin:.8rem 0;box-shadow:var(--shadow)}
+h2{margin:.2rem 0 .6rem;color:var(--btn);font-size:1.06rem;display:flex;align-items:center;gap:.5rem}
+.hint{color:var(--muted);font-size:.9rem}
+input,select,textarea{width:100%;padding:.65rem;border:1px solid var(--border);border-radius:12px;background:#fff;font-size:.95rem}
+textarea{min-height:92px}
+button{background:var(--btn);color:var(--btnText);border:none;border-radius:12px;padding:.5rem .8rem;font-weight:700;cursor:pointer;font-size:.95rem}
+button:hover{opacity:.96}
+button.danger{background:var(--danger)}
+button.edit-btn{background:var(--edit)}
+.btn-row{display:flex;gap:.5rem;flex-wrap:wrap}
+
+/* Dashboard */
+.stats{display:grid; gap:12px; grid-template-columns:repeat(2,minmax(0,1fr));}
+.stat{background:var(--card); border-radius:18px; padding:10px 12px; box-shadow:var(--shadow); display:flex; align-items:center; justify-content:space-between;}
+.stat .meta{display:flex; flex-direction:column; gap:4px}
+.stat .title{color:var(--muted); font-weight:700}
+.stat .value{font-size:1.2rem; font-weight:800}
+.stat i{font-size:1.2rem; color:#111827; opacity:.7}
+@media (min-width:850px){ .stats{grid-template-columns:repeat(4,minmax(0,1fr));} }
+
+/* Tables */
+.table-wrapper{overflow-x:auto;border:1px solid var(--border);border-radius:14px;margin-top:.6rem;background:#fff}
+table{width:100%;border-collapse:collapse;min-width:520px}
+th{background:var(--btn);color:#fff;padding:.7rem}
+td{padding:.55rem;text-align:center;border-top:1px solid var(--border)}
+tr:nth-child(even){background:#f7f7f7}
+.table-wrapper table td button{padding:.35rem .6rem;font-size:.9rem;border-radius:10px}
+
+/* Accordion */
+.accordion{border-radius:var(--r);overflow:hidden}
+.accordion-header{background:#f0fdf4;color:#065f46;padding:.7rem .9rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:700;border:1px solid #bbf7d0;border-bottom:none}
+.accordion + .accordion .accordion-header{border-top-left-radius:0;border-top-right-radius:0}
+.accordion-header .chev{color:#10b981;transition:transform .25s}
+.accordion-content{background:#fff;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease;padding:0 1rem;border:1px solid #e5e7eb;border-top:none}
+.accordion.active .accordion-content{max-height:1600px;padding:1rem}
+.accordion.active .accordion-header .chev{transform:rotate(180deg)}
+
+/* Timetable */
+.timetable th.day,.timetable td.day{background:#e6f3ff;font-weight:700;min-width:90px}
+.timetable td.empty{color:#9ca3af;background:#fafafa}
+
+/* Toast */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(10px);background:#111827;color:#fff;padding:.7rem 1.1rem;border-radius:12px;opacity:0;transition:opacity .35s,transform .35s;box-shadow:var(--shadow);z-index:9999}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Notifications & tags */
+.badge{display:inline-flex;min-width:18px;height:18px;align-items:center;justify-content:center;padding:0 6px;border-radius:9999px;background:#ef4444;color:#fff;font-weight:700;font-size:.75rem}
+.badge.hidden{display:none}
+.notif-item{padding:.6rem .8rem;border:1px solid #e5e7eb;border-radius:10px;margin:.35rem 0;background:#fff}
+.notif-absence{background:#fee2e2;border-color:#fecaca;color:#b91c1c}
+.tag{display:inline-block;background:#eef2ff;color:#3730a3;border:1px solid #c7d2fe;padding:.2rem .5rem;border-radius:9999px;margin:.2rem .2rem 0 0;font-weight:700;font-size:.83rem}
+
+/* Attendance radios */
+.att-options{display:inline-flex; align-items:center; gap:12px; white-space:nowrap}
+.att-options label{display:inline-flex; align-items:center; gap:6px; cursor:pointer}
+.att-options input{ transform:translateY(1px) }
+
+/* Dark theme */
+body[data-theme='dark']{
+  --bg:#0b1220; --text:#e5e7eb; --muted:#9ca3af;
+  --header:linear-gradient(135deg,#0ea5e9,#7c3aed);
+  --card:#0f172a; --btn:#22c55e; --btnText:#0b1220;
+  --danger:#ef4444; --edit:#60a5fa;
+  --border:#1f2937; --shadow:0 10px 24px rgba(0,0,0,.45);
+}
+body[data-theme='dark'] tr:nth-child(even){background:#0d1726}
+body[data-theme='dark'] .table-wrapper{background:var(--card); border-color:var(--border)}
+body[data-theme='dark'] .accordion-header{background:#0c1a28; color:#e5e7eb; border-color:#1f2937}
+body[data-theme='dark'] .toast{background:#0b1220; color:#e5e7eb}
+
+/* عناوين الأكورديون: الأيقونة على اليمين */
+.accordion-header .hdr{
+  display:inline-flex; align-items:center; gap:.5rem; font-weight:700;
+  flex-direction:row-reverse; /* أيقونة يمين ثم النص */
+}
+.accordion-header .hdr-ico{
+  width:28px; height:28px; display:inline-flex; align-items:center; justify-content:center;
+  border-radius:8px; font-size:1rem; border:1px solid transparent;
+}
+.accordion-header[data-kind="add"]  .hdr-ico{ background:#e8faf3; color:#10b981; border-color:#ccebdc; }
+.accordion-header[data-kind="list"] .hdr-ico{ background:#eef2ff; color:#3b82f6; border-color:#c7d2fe; }
+.accordion-header[data-kind="send"] .hdr-ico{ background:#ecfeff; color:#0ea5e9; border-color:#bae6fd; }
+
+/* Parent day view */
+.day-head{display:flex; align-items:center; justify-content:space-between; background:linear-gradient(135deg,#10b98122,#0ea5e922); border:1px solid var(--border); border-radius:14px; padding:.5rem .7rem; margin:.4rem 0 .6rem}
+.day-head .date{ display:flex; flex-direction:column; align-items:center; line-height:1.2 }
+.day-head .weekday{ font-weight:800 }
+.day-head .fulldate{ color:var(--muted); font-size:.9rem }
+#parent-day-list{ display:grid; gap:10px }
+.slot-card{ background:#fff; border:1px solid var(--border); border-radius:16px; box-shadow:var(--shadow); padding:.7rem .8rem; display:flex; align-items:center; justify-content:space-between}
+.slot-card .left{ display:flex; flex-direction:column; gap:6px }
+.slot-card .time{ color:var(--muted); font-weight:700 }
+.slot-card .subject{ font-weight:900; letter-spacing:.3px }
+.badge-mini{ display:inline-block; padding:.1rem .4rem; border-radius:9999px; border:1px solid #ccebdc; background:#e6fff3; color:#0f5132; font-weight:800; font-size:.78rem; margin-inline-start:.35rem }
+
+/* زر عرض المزيد/أقل */
+.moreless{margin-top:.5rem; display:flex; justify-content:center}
+.moreless button{background:#0ea5e9; border-radius:10px}
+
+/* ===== Custom Dialog ===== */
+.modal-backdrop{
+  position:fixed; inset:0; background:rgba(0,0,0,.35); display:none; align-items:center; justify-content:center; z-index:99998;
+}
+.modal{
+  width:min(92vw,520px); background:var(--card); color:var(--text); border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,.2);
+  border:1px solid var(--border); padding:16px 16px 12px;
+}
+.modal h3{margin:.2rem 0 .6rem; font-size:1.05rem; color:var(--text)}
+.modal p{margin:.2rem 0 .9rem; color:var(--muted)}
+.modal input{margin:.2rem 0 .8rem; width:100%}
+.modal-buttons{display:flex; gap:.5rem; justify-content:flex-end}
+.modal-buttons .btn{padding:.5rem .9rem; border-radius:10px; cursor:pointer; font-weight:800; border:1px solid transparent}
+.modal-buttons .ok{background:var(--btn); color:var(--btnText)}
+.modal-buttons .cancel{background:#f3f4f6; color:#111827; border-color:#e5e7eb}
+body[data-theme='dark'] .modal{background:#0f172a}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="theme-pill" id="btn-theme" title="تبديل الثيم">
+    <i class="fa-solid fa-moon"></i>
+    <span class="txt">الوضع الليلي</span>
+  </div>
+  <h1>بوابة المؤسسة <i class="fa-solid fa-graduation-cap"></i></h1>
+  <div class="theme-pill" id="btn-logout" title="تسجيل الخروج" style="display:none">
+    <i class="fa-solid fa-right-from-bracket"></i>
+    <span class="txt">خروج</span>
+  </div>
+</header>
+
+<div class="container">
+  <div id="toast" class="toast"></div>
+
+  <!-- Login -->
+  <section id="panel-login">
+    <div class="card">
+      <h2><i class="fa-solid fa-right-to-bracket"></i> تسجيل الدخول</h2>
+      <div class="btn-row">
+        <input id="universal-code" placeholder="🗝️ أدخل الكود">
+        <button id="btn-universal-login" type="button">
+          <i class="fa-solid fa-arrow-right-to-bracket"></i> دخول
+        </button>
+      </div>
+      <div id="init-msg" class="hint">يتم جلب البيانات من السحابة...</div>
+    </div>
+  </section>
+
+  <!-- Admin -->
+  <section id="panel-admin" style="display:none">
+    <div class="stats" id="admin-stats">
+      <div class="stat"><div class="meta"><div class="title">الأساتذة</div><div class="value" id="stat-teachers">0</div></div><i class="fa-solid fa-chalkboard-user"></i></div>
+      <div class="stat"><div class="meta"><div class="title">الأقسام</div><div class="value" id="stat-classes">0</div></div><i class="fa-solid fa-layer-group"></i></div>
+      <div class="stat"><div class="meta"><div class="title">الإشعارات</div><div class="value" id="stat-notifs">0</div></div><i class="fa-solid fa-bell"></i></div>
+      <div class="stat"><div class="meta"><div class="title">التلاميذ</div><div class="value" id="stat-students">0</div></div><i class="fa-solid fa-children"></i></div>
+    </div>
+
+    <!-- إضافة أقسام -->
+    <div class="card accordion">
+      <div class="accordion-header" data-kind="add">
+        <div class="hdr"><span>إضافة أقسام</span><i class="fa-solid fa-circle-plus hdr-ico"></i></div>
+        <i class="fa-solid fa-chevron-down chev"></i>
+      </div>
+      <div class="accordion-content">
+        <div class="btn-row">
+          <input id="input-class-name" placeholder="اسم القسم (مثلاً: 1BAC-علوم)">
+          <button id="btn-add-class-top"><i class="fa-solid fa-plus"></i> إضافة قسم</button>
+        </div>
+        <div class="hint">الأقسام الحالية:</div>
+        <div id="classes-tags"></div>
+      </div>
+    </div>
+
+    <!-- إضافة أستاذ -->
+    <div class="card accordion">
+      <div class="accordion-header" data-kind="add">
+        <div class="hdr"><span>إضافة أستاذ</span><i class="fa-solid fa-circle-plus hdr-ico"></i></div>
+        <i class="fa-solid fa-chevron-down chev"></i>
+      </div>
+      <div class="accordion-content">
+        <input id="input-teacher-name" placeholder="اسم الأستاذ">
+        <select id="select-teacher-subject"></select>
+        <label class="hint" for="select-teacher-classes">اختر الأقسام (يمكن اختيار أكثر من قسم)</label>
+        <select id="select-teacher-classes" multiple size="8"></select>
+        <div id="selected-teacher-classes" class="hint" style="margin-top:.4rem">لا أقسام محددة بعد</div>
+        <button id="btn-add-teacher" style="margin-top:.6rem"><i class="fa-solid fa-user-plus"></i> إضافة</button>
+      </div>
+    </div>
+
+    <!-- لائحة الأقسام -->
+    <div class="card accordion">
+      <div class="accordion-header" data-kind="list">
+        <div class="hdr"><span>لائحة الأقسام</span><i class="fa-solid fa-list-ul hdr-ico"></i></div>
+        <i class="fa-solid fa-chevron-down chev"></i>
+      </div>
+      <div class="accordion-content">
+        <div class="table-wrapper" id="classes-wrapper" style="display:none">
+          <table id="table-classes">
+            <thead>
+              <tr><th>القسم</th><th>عدد الأساتذة</th><th>عدد التلاميذ</th><th>حذف</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="hint">حذف القسم سيحذف كذلك الإشعارات، النقط، واستعمال الزمن المرتبطة به.</div>
+      </div>
+    </div>
+
+    <!-- لائحة الأساتذة -->
+    <div class="card accordion">
+      <div class="accordion-header" data-kind="list">
+        <div class="hdr"><span>لائحة الأساتذة</span><i class="fa-solid fa-list-ul hdr-ico"></i></div>
+        <i class="fa-solid fa-chevron-down chev"></i>
+      </div>
+      <div class="accordion-content">
+        <div class="table-wrapper" id="teachers-wrapper" style="display:none">
+          <table id="table-teachers">
+            <thead><tr><th>الاسم</th><th>المادة</th><th>القسم</th><th>الكود</th><th>إجراءات</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- لائحة التلاميذ -->
+    <div class="card accordion">
+      <div class="accordion-header" data-kind="list">
+        <div class="hdr"><span>لائحة التلاميذ</span><i class="fa-solid fa-list-ul hdr-ico"></i></div>
+        <i class="fa-solid fa-chevron-down chev"></i>
+      </div>
+      <div class="accordion-content">
+        <div class="table-wrapper" id="parents-wrapper" style="display:none">
+          <table id="table-parents">
+            <thead><tr><th>الاسم</th><th>القسم</th><th>الكود</th><th>حذف</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- إرسال إشعار للأساتذة -->
+    <div class="card accordion">
+      <div class="accordion-header" data-kind="send">
+        <div class="hdr"><span>إرسال إشعار للأساتذة</span><i class="fa-solid fa-paper-plane hdr-ico"></i></div>
+        <i class="fa-solid fa-chevron-down chev"></i>
+      </div>
+      <div class="accordion-content">
+        <textarea id="textarea-notification-teachers" placeholder="نص الإشعار (مرئي لجميع الأساتذة)"></textarea>
+        <button id="btn-send-notification-teachers"><i class="fa-solid fa-paper-plane"></i> إرسال للأساتذة</button>
+      </div>
+    </div>
+
+    <!-- إرسال إشعار لأولياء الأمور -->
+    <div class="card accordion">
+      <div class="accordion-header" data-kind="send">
+        <div class="hdr"><span>إرسال إشعار لأولياء الأمور</span><i class="fa-solid fa-paper-plane hdr-ico"></i></div>
+        <i class="fa-solid fa-chevron-down chev"></i>
+      </div>
+      <div class="accordion-content">
+        <textarea id="textarea-notification-parents" placeholder="نص الإشعار (مرئي لجميع أولياء الأمور)"></textarea>
+        <button id="btn-send-notification-parents"><i class="fa-solid fa-paper-plane"></i> إرسال للأولياء</button>
+      </div>
+    </div>
+
+    <!-- استعمال الزمن للأقسام -->
+    <div class="card accordion">
+      <div class="accordion-header">
+        <div class="hdr"><span>استعمال الزمن للأقسام</span><i class="fa-solid fa-table hdr-ico" style="background:#f3f4f6;color:#374151;border-color:#e5e7eb"></i></div>
+        <i class="fa-solid fa-chevron-down chev"></i>
+      </div>
+      <div class="accordion-content">
+        <div class="btn-row">
+          <select id="tt-class"><option value="">— اختر القسم —</option></select>
+          <input id="tt-new-class" placeholder="أو اكتب قسماً جديداً">
+          <button id="btn-add-class"><i class="fa-solid fa-plus"></i> إضافة قسم</button>
+        </div>
+        <div id="tt-step2" style="display:none;margin-top:.6rem">
+          <div class="table-wrapper" style="margin:.4rem 0 .6rem">
+            <table id="tt-editor" class="timetable" dir="rtl"></table>
+          </div>
+          <div class="btn-row">
+            <button id="btn-tt-clear" class="danger"><i class="fa-solid fa-eraser"></i> إفراغ الجدول</button>
+            <button id="btn-tt-save"><i class="fa-solid fa-floppy-disk"></i> حفظ استعمال الزمن</button>
+            <button id="btn-tt-fullscreen"><i class="fa-solid fa-arrows-up-down-left-right"></i> وضع ملء الشاشة</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Teacher -->
+  <section id="panel-teacher" style="display:none">
+    <div class="card" id="teacher-welcome">
+      <h2><i class="fa-solid fa-chalkboard-user"></i> مرحباً أستاذ <span id="span-teacher-name"></span></h2>
+      <p class="hint">المادة: <b id="span-teacher-subject"></b> — أقسامك: <b id="span-teacher-classes"></b></p>
+    </div>
+
+    <!-- اشعارات من الإدارة (للأستاذ) -->
+    <div class="card accordion">
+      <div class="accordion-header" data-kind="list">
+        <div class="hdr"><span>اشعارات من الإدارة</span><i class="fa-solid fa-bell hdr-ico"></i></div>
+        <i class="fa-solid fa-chevron-down chev"></i>
+      </div>
+      <div class="accordion-content">
+        <div id="list-teacher-notifs"></div>
+      </div>
+    </div>
+
+    <!-- إرسال إشعار للتلاميذ وأولياء الأمور -->
+    <div class="card accordion">
+      <div class="accordion-header" data-kind="send">
+        <div class="hdr"><span>إرسال إشعار للتلاميذ و أولياء الأمور</span><i class="fa-solid fa-paper-plane hdr-ico"></i></div>
+        <i class="fa-solid fa-chevron-down chev"></i>
+      </div>
+      <div class="accordion-content">
+        <select id="select-task-class"></select>
+        <textarea id="textarea-task-message" placeholder="نص الإشعار"></textarea>
+        <button id="btn-add-task"><i class="fa-solid fa-paper-plane"></i> إرسال</button>
+
+        <hr style="margin:1rem 0;border:none;border-top:1px dashed #e5e7eb">
+        <div class="hint" style="margin-bottom:.4rem">أو إرسال إشعار لتلميذ معيّن:</div>
+        <select id="notify-class"></select>
+        <select id="notify-student"><option value="">— اختر التلميذ —</option></select>
+        <textarea id="notify-message" placeholder="نص الإشعار للتلميذ المحدد"></textarea>
+        <button id="btn-notify-student"><i class="fa-solid fa-paper-plane"></i> إرسال للتلميذ</button>
+
+        <div class="table-wrapper" id="tasks-wrapper" style="display:none;margin-top:.7rem">
+          <table id="table-tasks">
+            <thead><tr><th>القسم</th><th>المستهدف</th><th>الإشعار</th><th>حذف</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card accordion">
+      <div class="accordion-header" data-kind="add">
+        <div class="hdr"><span>إضافة نقطة</span><i class="fa-solid fa-circle-plus hdr-ico"></i></div>
+        <i class="fa-solid fa-chevron-down chev"></i>
+      </div>
+      <div class="accordion-content">
+        <select id="score-class"></select>
+        <label class="hint" for="score-student">يمكن اختيار أكثر من تلميذ</label>
+        <select id="score-student" multiple size="8"></select>
+        <select id="score-exam">
+          <option value="">اختر الامتحان</option>
+          <option value="الفرض الأول">الفرض الأول</option>
+          <option value="الفرض الثاني">الفرض الثاني</option>
+          <option value="الفرض الثالث">الفرض الثالث</option>
+          <option value="الفرض الرابع">الفرض الرابع</option>
+          <option value="الأنشطة المدمجة">الأنشطة المدمجة</option>
+        </select>
+        <select id="score-term">
+          <option value="">اختر الدورة</option>
+          <option value="الدورة الأولى">الدورة الأولى</option>
+          <option value="الدورة الثانية">الدورة الثانية</option>
+        </select>
+        <input id="score-val" type="number" placeholder="النقطة /20" min="0" max="20" step="0.25">
+        <button id="btn-add-score"><i class="fa-solid fa-plus"></i> إضافة</button>
+
+        <div class="table-wrapper" id="scores-wrapper" style="display:none">
+          <table id="table-scores">
+            <thead><tr><th>القسم</th><th>التلميذ</th><th>المادة</th><th>الامتحان</th><th>الدورة</th><th>النقطة</th><th>إجراءات</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card accordion">
+      <div class="accordion-header">
+        <div class="hdr"><span>تسجيل الغياب</span><i class="fa-solid fa-user-clock hdr-ico" style="background:#f3f4f6;color:#374151;border-color:#e5e7eb"></i></div>
+        <i class="fa-solid fa-chevron-down chev"></i>
+      </div>
+      <div class="accordion-content">
+        <div class="btn-row">
+          <select id="att-class"></select>
+          <input id="att-date" type="date">
+          <select id="att-period"></select>
+        </div>
+        <div class="btn-row" style="margin:.35rem 0">
+          <button id="btn-att-all-present"><i class="fa-solid fa-user-check"></i> الكل حاضر</button>
+          <button id="btn-att-all-absent"><i class="fa-solid fa-user-xmark"></i> الكل غائب</button>
+        </div>
+        <div class="table-wrapper" style="margin:.5rem 0">
+          <table id="att-students-table">
+            <thead><tr><th>التلميذ</th><th>الحالة</th></tr></thead>
+            <tbody id="att-students-body"></tbody>
+          </table>
+        </div>
+        <button id="btn-att-save"><i class="fa-solid fa-floppy-disk"></i> حفظ الغياب</button>
+
+        <div class="table-wrapper" id="att-teacher-wrapper" style="display:none;margin-top:.6rem">
+          <table id="att-teacher-table">
+            <thead><tr><th>التاريخ</th><th>القسم</th><th>الحصة</th><th>عدد الغياب</th><th>عرض</th><th>حذف</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Parent -->
+  <section id="panel-parent" style="display:none">
+    <div class="card">
+      <h2><i class="fa-solid fa-user"></i> مرحباً <span id="span-parent-name"></span></h2>
+      <p class="hint">القسم: <b id="span-parent-class"></b></p>
+    </div>
+
+    <div class="card">
+      <h2 id="parent-notifs-title" title="اضغط لاعتبارها مقروءة">
+        <i class="fa-solid fa-bell"></i> اشعارات من الإدارة
+        <span id="badge-parent-admin" class="badge hidden">0</span>
+      </h2>
+      <div id="list-parent-notifs"></div>
+      <div class="moreless" id="ml-parent-notifs" style="display:none"><button>عرض المزيد</button></div>
+    </div>
+
+    <div class="card">
+      <h2 id="parent-tasks-title" title="اضغط لاعتبارها مقروءة">
+        <i class="fa-solid fa-list-check"></i> اشعارات من الاستاذ
+        <span id="badge-parent-tasks" class="badge hidden">0</span>
+      </h2>
+      <div id="list-parent-tasks"></div>
+      <div class="moreless" id="ml-parent-tasks" style="display:none"><button>عرض المزيد</button></div>
+    </div>
+
+    <div class="card">
+      <h2 id="parent-grades-title" title="اضغط لاعتبارها مقروءة">
+        <i class="fa-solid fa-star-half-stroke"></i> النقط
+        <span id="badge-parent-grades" class="badge hidden">0</span>
+      </h2>
+      <!-- ⬇️ إخفاء الجدول عند عدم توفر نقط + إظهار رسالة -->
+      <div class="table-wrapper" id="parent-grades-wrapper">
+        <table id="parent-grades-table">
+          <thead><tr><th>المادة</th><th>الامتحان</th><th>الدورة</th><th>النقطة</th></tr></thead>
+          <tbody id="tbody-parent-grades"></tbody>
+        </table>
+      </div>
+      <div id="parent-grades-empty" class="hint" style="display:none">لا نقط بعد.</div>
+    </div>
+
+    <!-- حصص اليوم -->
+    <div class="card">
+      <h2><i class="fa-solid fa-calendar-day"></i> حصص هذا اليوم</h2>
+      <div class="day-head">
+        <button id="pd-prev" title="اليوم السابق">‹</button>
+        <div class="date">
+          <div id="pd-weekday" class="weekday">—</div>
+          <div id="pd-date" class="fulldate">—</div>
+        </div>
+        <button id="pd-next" title="اليوم الموالي">›</button>
+      </div>
+      <div id="parent-day-list"><div class="hint">ستظهر حصص اليوم هنا.</div></div>
+    </div>
+  </section>
+</div>
+
+<!-- Custom Dialog (modal) -->
+<div id="modal-root" class="modal-backdrop" role="dialog" aria-modal="true">
+  <div class="modal">
+    <h3 id="modal-title">تأكيد</h3>
+    <p id="modal-message">هل أنت متأكد؟</p>
+    <input id="modal-input" style="display:none" />
+    <div class="modal-buttons">
+      <button class="btn cancel" id="modal-cancel">إلغاء</button>
+      <button class="btn ok" id="modal-ok">موافق</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= Firebase ================= */
+const firebaseConfig={
+  apiKey:"AIzaSyALBF0b8h-kLcdXyK-tfgrFHSi2dd-YL5Y",
+  databaseURL:"https://darlma3rifa-dd8ff-default-rtdb.firebaseio.com",
+  projectId:"darlma3rifa-dd8ff"
+};
+firebase.initializeApp(firebaseConfig);
+const db=firebase.database();
+
+/* ===== Helpers & State ===== */
+let classes=[],teachers=[],parents=[],notificationsParents=[],notificationsTeachers=[],tasks=[],scores=[],timetables={},lastSeen={},attendance=[];
+let dataReady=false,currentTeacher=null;
+
+const days=["الإثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"]; // بدون الأحد
+const periods=["08:00-09:00","09:00-10:00","10:00-11:00","11:00-12:00","14:00-15:00","15:00-16:00","16:00-17:00","17:00-18:00"];
+const subjects=["اللغة العربية","اللغة الفرنسية","اللغة الإنجليزية","الرياضيات","العلوم الفيزيائية","علوم الحياة والأرض","الإجتماعيات","التربية الإسلامية","التربية البدنية","التربية الموسيقية","التربية التشكيلية","التربية الأسرية"];
+const daysAll=["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+let parentDayDate=new Date();
+
+const $=s=>document.querySelector(s);
+const norm=s=>String(s||"").trim();
+const isNumericOnly=s=>/^\d+$/.test(norm(s));
+const todayStr=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+const dateToTs=ds=>ds?new Date(ds+'T00:00:00').getTime():0;
+const now=()=>Date.now();
+function showToast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2200);}
+
+/* ===== Theme ===== */
+function applyTheme(t){
+  document.body.setAttribute('data-theme', t);
+  const icon=$("#btn-theme i"), txt=$("#btn-theme .txt");
+  if(icon&&txt){ if(t==='dark'){icon.className="fa-solid fa-sun";txt.textContent="الوضع الفاتح";} else {icon.className="fa-solid fa-moon";txt.textContent="الوضع الليلي";} }
+}
+(function(){
+  const saved=localStorage.getItem('theme');
+  const prefersDark=window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme(saved || (prefersDark?'dark':'light'));
+})();
+$("#btn-theme")?.addEventListener('click',()=>{
+  const cur=document.body.getAttribute('data-theme')==='dark'?'dark':'light';
+  const next=cur==='dark'?'light':'dark';
+  localStorage.setItem('theme',next); applyTheme(next);
+});
+
+/* ===== Custom Dialog API ===== */
+const modalRoot=$("#modal-root"), modalTitle=$("#modal-title"), modalMsg=$("#modal-message"), modalIn=$("#modal-input"), btnOk=$("#modal-ok"), btnCancel=$("#modal-cancel");
+function openDialog({title="تنبيه", message="", type="alert", inputValue=""}){
+  modalTitle.textContent=title; modalMsg.textContent=message;
+  modalIn.style.display = (type==="prompt") ? "block" : "none";
+  modalIn.value = inputValue||"";
+  modalRoot.style.display="flex";
+  return new Promise(res=>{
+    btnOk.onclick=()=>{ modalRoot.style.display="none"; res( type==="prompt" ? {ok:true, value:modalIn.value} : {ok:true}); };
+    btnCancel.onclick=()=>{ modalRoot.style.display="none"; res({ok:false}); };
+  });
+}
+async function appConfirm(msg, title="تأكيد"){ const r=await openDialog({title,message:msg,type:"confirm"}); return r.ok; }
+async function appPrompt(msg, defVal="", title="إدخال"){ const r=await openDialog({title,message:msg,type:"prompt",inputValue:defVal}); return r.ok ? r.value : null; }
+async function appAlert(msg, title="تنبيه"){ await openDialog({title,message:msg,type:"alert"}); }
+
+/* ===== Clean ===== */
+function cleanWeirdClassesOnce(){
+  classes=(classes||[]).map(norm).filter(c=>c && !isNumericOnly(c));
+  if(timetables&&typeof timetables==='object'&&!Array.isArray(timetables)){Object.keys(timetables).forEach(k=>{if(/^\d+$/.test(k)) delete timetables[k];});}
+  (teachers||[]).forEach(t=>{
+    if(!Array.isArray(t.classes)){ t.classes=String(t.classes||'').split(',').map(s=>s.trim()).filter(Boolean);}
+    t.classes=t.classes.filter(c=>!isNumericOnly(c));
+  });
+}
+
+/* ===== DB ===== */
+const writeAll=()=>db.ref().update({classes,teachers,parents,notificationsParents,notificationsTeachers,tasks,scores,timetables,lastSeen,attendance});
+async function loadOnce(){
+  const keys=["classes","teachers","parents","notificationsParents","notificationsTeachers","tasks","scores","timetables","lastSeen","attendance"];
+  const snaps=await Promise.all(keys.map(k=>db.ref(k).once('value')));
+  [classes,teachers,parents,notificationsParents,notificationsTeachers,tasks,scores,timetables,lastSeen,attendance]=snaps.map(s=>s.val()??(s.key==="timetables"||s.key==="lastSeen"?{}:[]));
+  cleanWeirdClassesOnce(); dataReady=true; $("#init-msg")?.remove(); initialRender();
+}
+function attachRealtime(){
+  const on=(k,set)=>db.ref(k).on('value',s=>{ if(s.exists()){ set(s.val()); if(dataReady) renderAll(); }});
+  on("classes",v=>classes=v||[]); on("teachers",v=>teachers=v||[]); on("parents",v=>parents=v||[]);
+  on("notificationsParents",v=>notificationsParents=v||[]);
+  on("notificationsTeachers",v=>notificationsTeachers=v||[]);
+  on("tasks",v=>tasks=v||[]); on("scores",v=>scores=v||[]);
+  on("timetables",v=>timetables=v||{}); on("lastSeen",v=>lastSeen=v||{}); on("attendance",v=>attendance=v||[]);
+}
+
+/* ===== Populate & Tables ===== */
+function populateSubjects(){
+  const sel=$("#select-teacher-subject"); if(!sel) return;
+  sel.innerHTML='<option value="">اختر المادة</option>';
+  subjects.forEach(s=>{const o=document.createElement("option");o.value=s;o.textContent=s;sel.appendChild(o);});
+}
+function populateTeacherClassesSelect(){
+  const sel=$("#select-teacher-classes"); if(!sel) return;
+  sel.innerHTML=""; (classes||[]).forEach(c=>{const o=document.createElement("option");o.value=c;o.textContent=c;sel.appendChild(o);});
+  updateSelectedTeacherClassesSummary();
+}
+function updateSelectedTeacherClassesSummary(){
+  const sel=$("#select-teacher-classes"), box=$("#selected-teacher-classes"); if(!sel||!box) return;
+  const values=Array.from(sel.selectedOptions||[]).map(o=>o.value);
+  box.textContent = values.length ? ("الأقسام المسندة: "+values.join('، ')) : 'لا أقسام محددة بعد';
+}
+$("#select-teacher-classes")?.addEventListener('change', updateSelectedTeacherClassesSummary);
+
+function updateClassesDropdown(){
+  const all=(classes||[]).slice().sort((a,b)=>a.localeCompare(b,'ar',{numeric:true,sensitivity:'base'}));
+  const ttSel=$("#tt-class");
+  if(ttSel){ const prev=ttSel.value; ttSel.innerHTML='<option value="">— اختر القسم —</option>'; all.forEach(c=>{const o=document.createElement("option");o.value=c;o.textContent=c;ttSel.appendChild(o);}); ttSel.value=all.includes(prev)?prev:""; setTTUIState(); }
+  populateTeacherClassesSelect(); renderClassesTags(); renderClassesTable();
+}
+function renderClassesTags(){ const box=$("#classes-tags"); if(!box) return; box.innerHTML=""; (classes||[]).forEach(c=>{const s=document.createElement("span");s.className="tag";s.textContent=c;box.appendChild(s);}); }
+
+/* Admin stats */
+function renderAdminStats(){
+  $("#stat-teachers").textContent=(teachers||[]).length;
+  $("#stat-classes").textContent=(classes||[]).length;
+  $("#stat-students").textContent=(parents||[]).length;
+  $("#stat-notifs").textContent=(notificationsParents.length+notificationsTeachers.length)||0;
+}
+
+/* Tables */
+function renderClassesTable(){
+  const wrap=$("#classes-wrapper"), tbody=$("#table-classes tbody"); if(!wrap||!tbody) return; tbody.innerHTML="";
+  const list=(classes||[]).slice().sort((a,b)=>a.localeCompare(b,'ar',{numeric:true,sensitivity:'base'}));
+  list.forEach(c=>{
+    const tCount=(teachers||[]).filter(t=>Array.isArray(t.classes)&&t.classes.includes(c)).length;
+    const pCount=(parents||[]).filter(p=>p.class===c).length;
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${c}</td><td>${tCount}</td><td>${pCount}</td><td><button class="danger" data-del-class="${encodeURIComponent(c)}">حذف</button></td>`;
+    tbody.appendChild(tr);
+  });
+  wrap.style.display=list.length?"block":"none";
+  tbody.querySelectorAll("[data-del-class]").forEach(b=>b.onclick=()=>deleteClassName(decodeURIComponent(b.dataset.delClass)));
+}
+async function deleteClassName(name){
+  if(!await appConfirm(`حذف القسم "${name}"؟ سيتم حذف المهام والنقط واستعمال الزمن المرتبطة به.`)) return;
+  classes=(classes||[]).filter(c=>c!==name);
+  teachers=(teachers||[]).map(t=>({name:t.name,subject:t.subject,classes:(t.classes||[]).filter(c=>c!==name),code:t.code}));
+  const delCodes=new Set(); const remain=[]; (parents||[]).forEach(p=>{ if(p.class===name) delCodes.add(p.code); else remain.push(p);}); parents=remain;
+  tasks=(tasks||[]).filter(t=>t.class!==name); scores=(scores||[]).filter(s=>s.class!==name);
+  if(timetables&&timetables[name]) delete timetables[name];
+  if(lastSeen && lastSeen.parents){ Object.keys(lastSeen.parents).forEach(code=>{ if(delCodes.has(code)) delete lastSeen.parents[code];}); }
+  await writeAll(); showToast("🗑️ تم الحذف");
+}
+function renderTeachers(){
+  const w=$("#teachers-wrapper"), tbody=$("#table-teachers tbody"); if(!tbody) return; tbody.innerHTML="";
+  (teachers||[]).forEach((t,i)=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${t.name||""}</td><td>${t.subject||""}</td><td>${Array.isArray(t.classes)?t.classes.join("، "):""}</td><td>${t.code||""}</td>
+    <td><button class="edit-btn" data-edit-teacher="${i}">تعديل</button> <button class="danger" data-del-teacher="${i}">حذف</button></td>`;
+    tbody.appendChild(tr);
+  });
+  w.style.display=(teachers&&teachers.length)?"block":"none";
+  tbody.querySelectorAll("[data-del-teacher]").forEach(b=>b.onclick=()=>deleteTeacher(+b.dataset.delTeacher));
+  tbody.querySelectorAll("[data-edit-teacher]").forEach(b=>b.onclick=()=>editTeacher(+b.dataset.editTeacher));
+}
+function renderParents(){
+  const w=$("#parents-wrapper"), tbody=$("#table-parents tbody"); if(!tbody) return; tbody.innerHTML="";
+  (parents||[]).forEach((p,i)=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${p.name||""}</td><td>${p.class||""}</td><td>${p.code||""}</td><td><button class="danger" data-del-parent="${i}">حذف</button></td>`;
+    tbody.appendChild(tr);
+  });
+  w.style.display=(parents&&parents.length)?"block":"none";
+  tbody.querySelectorAll("[data-del-parent]").forEach(b=>b.onclick=()=>deleteParent(+b.dataset.delParent));
+}
+
+/* ===== Teacher: إشعارات الإدارة للأستاذ ===== */
+function renderTeacherNotifs(){
+  const box=$("#list-teacher-notifs"); if(!box) return; box.innerHTML="";
+  const list=(notificationsTeachers||[]).slice().sort((a,b)=>(b.ts||0)-(a.ts||0));
+  if(!list.length){ box.innerHTML='<div class="hint">لا إشعارات من الإدارة حالياً.</div>'; return; }
+  list.forEach(n=>{
+    const when=n.ts?new Date(n.ts).toLocaleString('ar-MA',{dateStyle:'medium',timeStyle:'short'}):'—';
+    const d=document.createElement('div'); d.className='notif-item';
+    d.innerHTML=`<div class="hint" style="margin-bottom:4px">${when}</div><div>${n.message||''}</div>`;
+    box.appendChild(d);
+  });
+}
+
+/* ===== Teacher ===== */
+function updateTeacherTaskClass(){
+  const sel=$("#select-task-class"); if(!sel||!currentTeacher) return; sel.innerHTML="";
+  (currentTeacher.classes||[]).forEach(c=>{const o=document.createElement("option");o.value=c;o.textContent=c;sel.appendChild(o);});
+}
+function updateScoreStudentOptions(){
+  const cls=$("#score-class")?.value, sel=$("#score-student"); if(!sel) return; sel.innerHTML="";
+  if(!currentTeacher||!cls) return;
+  (parents||[]).filter(p=>p.class===cls).forEach(p=>{const o=document.createElement("option");o.value=p.name;o.textContent=p.name;sel.appendChild(o);});
+}
+function renderTasks(){
+  const w=$("#tasks-wrapper"), tbody=$("#table-tasks tbody"); if(!tbody) return; tbody.innerHTML="";
+  (tasks||[]).forEach((t,i)=>{ const tr=document.createElement("tr"); const target=t.student?t.student:'كل التلاميذ';
+    tr.innerHTML=`<td>${t.class||""}</td><td>${target}</td><td>${t.message||""}</td><td><button class="danger" data-del-task="${i}">حذف</button></td>`; tbody.appendChild(tr);});
+  w.style.display=(tasks&&tasks.length)?"block":"none";
+  tbody.querySelectorAll("[data-del-task]").forEach(b=>b.onclick=()=>deleteTask(+b.dataset.delTask));
+}
+function renderScores(){
+  const w=$("#scores-wrapper"), tbody=$("#table-scores tbody"); if(!w||!tbody) return; tbody.innerHTML="";
+  if(!currentTeacher){ w.style.display="none"; return; }
+  const cls=$("#score-class")?.value||""; if(!cls){ w.style.display="none"; return; }
+  const mine=(scores||[]).filter(s=>s.teacherCode===currentTeacher.code && s.class===cls)
+    .sort((a,b)=>a.student.localeCompare(b.student,'ar',{numeric:true})||a.term.localeCompare(b.term,'ar')||a.exam.localeCompare(b.exam,'ar'));
+  w.style.display=mine.length?"block":"none";
+  mine.forEach(s=>{
+    const idx=scores.indexOf(s);
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${s.class}</td><td>${s.student}</td><td>${s.subject}</td><td>${s.exam}</td><td>${s.term}</td><td>${s.value}</td>
+    <td><button class="edit-btn" data-edit-score="${idx}">تعديل</button> <button class="danger" data-del-score="${idx}">حذف</button></td>`;
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll("[data-edit-score]").forEach(b=>b.onclick=()=>editScore(+b.dataset.editScore));
+  tbody.querySelectorAll("[data-del-score]").forEach(b=>b.onclick=()=>deleteScore(+b.dataset.delScore));
+}
+
+/* ===== Parent panel ===== */
+function applyCollapsible(container, controllerId, max=5){
+  const items=[...container.children];
+  const ctrl=document.getElementById(controllerId);
+  if(items.length<=max){ if(ctrl) ctrl.style.display='none'; return; }
+  let expanded=false;
+  items.forEach((el,i)=>{ el.style.display= i<max ? '' : 'none'; });
+  if(!ctrl) return;
+  ctrl.style.display='flex';
+  const btn=ctrl.querySelector('button');
+  btn.textContent='عرض المزيد';
+  btn.onclick=()=>{
+    expanded=!expanded;
+    items.forEach((el,i)=>{ el.style.display= expanded ? '' : (i<max?'':'none'); });
+    btn.textContent= expanded ? 'عرض أقل' : 'عرض المزيد';
+  };
+}
+function renderParentTasks(){
+  const list=$("#list-parent-tasks"); if(!list) return; list.innerHTML="";
+  const code=localStorage.getItem('sessionCode') || $("#universal-code").value; const p=parents.find(x=>x.code===code); if(!p){ list.style.display="none"; return; }
+  const data=(tasks||[]).filter(t=>t.class===p.class && (!t.student || t.student===p.name))
+                         .sort((a,b)=>(b.ts||0)-(a.ts||0));
+  list.style.display=data.length?"block":"none";
+  if(!data.length){ list.innerHTML='<div class="hint">لا إشعارات من الأستاذ حالياً.</div>'; $("#ml-parent-tasks").style.display='none'; return; }
+  data.forEach(t=>{
+    const teacherByCode=(teachers||[]).find(T=>T.code===t.teacherCode);
+    const teacherGuess=(teachers||[]).find(T=>Array.isArray(T.classes)&&T.classes.includes(t.class));
+    const subject=(teacherByCode&&teacherByCode.subject) || (teacherGuess&&teacherGuess.subject) || '—';
+    const when=t.ts?new Date(t.ts).toLocaleString('ar-MA',{dateStyle:'medium',timeStyle:'short'}):'—';
+    const d=document.createElement("div");
+    d.className='notif-item';
+    d.innerHTML=`<div style="margin-bottom:4px"><b>${subject}</b> • <span class="hint">${when}</span></div><div>${t.message||''}</div>`;
+    list.appendChild(d);
+  });
+  applyCollapsible(list,'ml-parent-tasks',5);
+}
+function renderParentNotifs(){
+  const box=$("#list-parent-notifs"); if(!box) return; box.innerHTML="";
+  const code=localStorage.getItem('sessionCode') || $("#universal-code").value; const p=parents.find(x=>x.code===code); if(!p){ box.style.display="none"; return; }
+  const list=(notificationsParents||[]).filter(n=>{
+    if(typeof n==='string') return true;
+    if(n && n.type==='broadcast') return true;
+    if(n && n.type==='absence' && n.student===p.name) return true;
+    return false;
+  }).sort((a,b)=>(b.ts||0)-(a.ts||0));
+  box.style.display=list.length?"block":"none";
+  if(!list.length){ box.innerHTML='<div class="hint">لا إشعارات حالياً.</div>'; $("#ml-parent-notifs").style.display='none'; return; }
+  list.forEach(n=>{
+    const d=document.createElement("div");
+    if(typeof n==='string'){
+      d.className='notif-item'; d.innerHTML='<div class="hint">— • —</div><div>'+n+'</div>';
+    }else if(n.type==='absence'){
+      d.className='notif-item notif-absence';
+      const when=new Date(n.ts||dateToTs(n.date)).toLocaleString('ar-MA',{dateStyle:'medium',timeStyle:'short'});
+      const subj=n.subject||'—';
+      d.innerHTML=`<div style="margin-bottom:4px"><b>${subj}</b> • <span class="hint">${when}</span></div><div>غياب: ${n.student} • الحصة: ${n.period||'—'}</div>`;
+    }else{
+      d.className='notif-item';
+      const when2=n.ts?new Date(n.ts).toLocaleString('ar-MA',{dateStyle:'medium',timeStyle:'short'}):'—';
+      const subj2=n.subject||'—';
+      d.innerHTML=`<div style="margin-bottom:4px"><b>${subj2}</b> • <span class="hint">${when2}</span></div><div>${n.message||''}</div>`;
+    }
+    box.appendChild(d);
+  });
+  applyCollapsible(box,'ml-parent-notifs',5);
+}
+
+/* ===== Parent badges ===== */
+function ensureLastSeen(){ if(!lastSeen||typeof lastSeen!=='object') lastSeen={}; if(!lastSeen.parents) lastSeen.parents={}; }
+function getParentSeen(code){ ensureLastSeen(); if(!lastSeen.parents[code]) lastSeen.parents[code]={adminNotifs:0,grades:0,classTasks:{}}; return lastSeen.parents[code]; }
+function updateParentBadges(){
+  const code=localStorage.getItem('sessionCode'); const p=parents.find(x=>x.code===code); if(!p) return;
+  const seen=getParentSeen(p.code);
+  const relevant=n=> (typeof n==='string') || (n?.type==='broadcast') || (n?.type==='absence' && n.student===p.name);
+  const relevantList=(notificationsParents||[]).filter(relevant);
+  const countAdmin=relevantList.filter(n=>(n.ts||0)>(seen.adminNotifs||0)).length;
+  const countTasks=(tasks||[]).filter(t=>t.class===p.class && (!t.student || t.student===p.name) && (t.ts||0)>(seen.classTasks[p.class]||0)).length;
+  const countGrades=(scores||[]).filter(s=>s.student===p.name && (s.ts||0)>(seen.grades||0)).length;
+  const bA=$("#badge-parent-admin"), bT=$("#badge-parent-tasks"), bG=$("#badge-parent-grades");
+  if(bA){ bA.textContent=countAdmin; bA.classList.toggle('hidden',!countAdmin); }
+  if(bT){ bT.textContent=countTasks; bT.classList.toggle('hidden',!countTasks); }
+  if(bG){ bG.textContent=countGrades; bG.classList.toggle('hidden',!countGrades); }
+}
+$("#parent-notifs-title")?.addEventListener('click', async ()=>{
+  const code=localStorage.getItem('sessionCode'); const p=parents.find(x=>x.code===code); if(!p) return;
+  getParentSeen(p.code).adminNotifs=now(); await writeAll(); updateParentBadges();
+});
+$("#parent-tasks-title")?.addEventListener('click', async ()=>{
+  const code=localStorage.getItem('sessionCode'); const p=parents.find(x=>x.code===code); if(!p) return;
+  const s=getParentSeen(p.code); s.classTasks[p.class]=now(); await writeAll(); updateParentBadges();
+});
+
+/* ===== Parent daily schedule (Skip Sunday) ===== */
+function renderParentDayNav(){
+  $("#pd-weekday").textContent=daysAll[parentDayDate.getDay()];
+  $("#pd-date").textContent=parentDayDate.toLocaleDateString('ar-MA',{year:'numeric',month:'long',day:'numeric'});
+}
+function ensureTT(cls){ if(!cls) return; if(!timetables[cls]) timetables[cls]={}; days.forEach(d=>{ if(!timetables[cls][d]) timetables[cls][d]={}; periods.forEach(p=>{ if(typeof timetables[cls][d][p]!=='string') timetables[cls][d][p]="" }) }) }
+function renderParentDailySchedule(){
+  const list=document.getElementById('parent-day-list'); if(!list) return; list.innerHTML="";
+  const code=localStorage.getItem('sessionCode') || ""; const p=(parents||[]).find(x=>x.code===code);
+  if(!p){ list.innerHTML='<div class="hint">سجّل الدخول بحساب الوليّ.</div>'; return; }
+  const cls=p.class; ensureTT(cls); const tt=timetables[cls]||{};
+  const dayName=daysAll[parentDayDate.getDay()];
+  const dayMap=tt[dayName]||{};
+  const items=[];
+  periods.forEach(time=>{ const subj=(dayMap&&typeof dayMap[time]==='string')?dayMap[time]:""; if(subj) items.push({time,subject:subj}); });
+  if(!items.length){ list.innerHTML='<div class="hint">لا حصص محددة لهذا اليوم.</div>'; return; }
+  items.forEach(it=>{
+    const row=document.createElement('div'); row.className='slot-card';
+    const maybeExam=/امتحان|فرض/i.test(it.subject)?'<span class="badge-mini">امتحان</span>':'';
+    row.innerHTML=`<div class="left"><div class="time">${it.time.replace('-', ' - ')}</div><div class="subject">${it.subject} ${maybeExam}</div></div><i class="fa-solid fa-book-open"></i>`;
+    list.appendChild(row);
+  });
+}
+function skipSundayInit(){
+  if(parentDayDate.getDay()===0){ parentDayDate.setDate(parentDayDate.getDate()+1); }
+}
+function shiftParentDay(delta){
+  const d=new Date(parentDayDate);
+  d.setDate(d.getDate()+delta);
+  if(d.getDay()===0) d.setDate(d.getDate()+(delta>0?1:-1)); // تجاوز الأحد
+  parentDayDate=d; renderParentDayNav(); renderParentDailySchedule();
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.getElementById('pd-prev')?.addEventListener('click',()=>shiftParentDay(-1));
+  document.getElementById('pd-next')?.addEventListener('click',()=>shiftParentDay(1));
+});
+
+/* ===== Timetable editor (admin) ===== */
+function buildTTHeader(table){ const thead=document.createElement("thead"), tr=document.createElement("tr"), th=document.createElement("th"); th.className="day"; th.textContent="اليوم"; tr.appendChild(th); periods.forEach(p=>{const t=document.createElement("th"); t.textContent=p; tr.appendChild(t)}); thead.appendChild(tr); table.appendChild(thead); }
+function subjectSelect(v){ const sel=document.createElement("select"); const opt=document.createElement("option"); opt.value=""; opt.textContent="—"; sel.appendChild(opt); subjects.forEach(s=>{const o=document.createElement("option");o.value=s;o.textContent=s;sel.appendChild(o)}); sel.value=v||""; return sel; }
+function renderTTEditor(){ const t=$("#tt-editor"); if(!t) return; const cls=$("#tt-class").value; t.innerHTML=""; if(!cls) return; buildTTHeader(t); const tbody=document.createElement("tbody"); ensureTT(cls); const data=timetables[cls]||{}; days.forEach(d=>{const tr=document.createElement("tr"); const tdDay=document.createElement("td"); tdDay.className="day"; tdDay.textContent=d; tr.appendChild(tdDay); periods.forEach(p=>{const td=document.createElement("td"); const cur=(data[d]&&data[d][p])?data[d][p]:""; const sel=subjectSelect(cur); td.appendChild(sel); td.classList.toggle('empty',!cur); sel.onchange=()=>td.classList.toggle('empty',!sel.value); tr.appendChild(td);}); tbody.appendChild(tr);}); t.appendChild(tbody); }
+function collectTTFromEditor(){ const t=$("#tt-editor"); const cls=$("#tt-class").value; if(!t||!cls) return; ensureTT(cls); const tbody=t.querySelector("tbody"); if(!tbody) return; days.forEach((d,i)=>{const row=tbody.rows[i]; if(!row) return; periods.forEach((p,j)=>{const cell=row.cells[j+1]; const sel=cell?cell.querySelector("select"):null; timetables[cls][d][p]=sel?(sel.value||""):"";});}); }
+function setTTUIState(){ const cls=$("#tt-class").value; const step=$("#tt-step2"); if(cls){ step.style.display="block"; ensureTT(cls); renderTTEditor(); } else step.style.display="none"; }
+
+/* ===== Attendance ===== */
+function populateAttPeriodSelect(){ const sel=$("#att-period"); if(!sel) return; sel.innerHTML=''; periods.forEach(p=>{const o=document.createElement("option");o.value=p;o.textContent=p;sel.appendChild(o)}); if(!sel.value) sel.value=periods[0]; }
+function renderAttStudents(){
+  const tbody=$("#att-students-body"); if(!tbody) return;
+  const cls=$("#att-class")?.value||"", date=$("#att-date")?.value||todayStr(), per=$("#att-period")?.value||periods[0];
+  tbody.innerHTML=""; if(!cls){ tbody.innerHTML=`<tr><td colspan="2" class="hint">اختر قسماً لعرض التلاميذ.</td></tr>`; return; }
+  const list=(parents||[]).filter(p=>p.class===cls).sort((a,b)=>a.name.localeCompare(b.name,'ar',{numeric:true}));
+  if(!list.length){ tbody.innerHTML=`<tr><td colspan="2" class="hint">لا تلاميذ في هذا القسم.</td></tr>`; return; }
+  const existing=(attendance||[]).find(a=>a.teacherCode===currentTeacher?.code && a.class===cls && a.date===date && a.period===per);
+  const map={}; if(existing?.records) existing.records.forEach(r=>map[r.student]=r.status);
+  list.forEach((p,idx)=>{ const nameKey='att-'+idx; const st=map[p.name]||'present'; const tr=document.createElement("tr"); tr.dataset.student=p.name;
+    tr.innerHTML=`<td style="text-align:right">${p.name}</td>
+      <td><div class="att-options">
+        <label><input class="att-radio" type="radio" name="${nameKey}" value="present" ${st==='present'?'checked':''}> حاضر</label>
+        <label><input class="att-radio" type="radio" name="${nameKey}" value="absent" ${st==='absent'?'checked':''}> غائب</label>
+      </div></td>`; tbody.appendChild(tr); });
+}
+function renderTeacherAttendanceTable(){
+  const wrap=$("#att-teacher-wrapper"), tbody=$("#att-teacher-table tbody"); if(!wrap||!tbody) return;
+  if(!currentTeacher){ wrap.style.display='none'; return; }
+  const mine=(attendance||[]).filter(a=>a.teacherCode===currentTeacher.code).sort((a,b)=>(b.ts||dateToTs(b.date))-(a.ts||dateToTs(a.date)));
+  tbody.innerHTML=""; if(!mine.length){ wrap.style.display='none'; return; } wrap.style.display='block';
+  mine.forEach(a=>{
+    const idx=attendance.indexOf(a), date=a.date||new Date(a.ts||0).toLocaleDateString('ar-MA');
+    const count=(a.records||[]).filter(r=>r.status==='absent').length;
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${date}</td><td>${a.class}</td><td>${a.period||'—'}</td><td>${count}</td>
+      <td><button class="edit-btn" data-view-att="${idx}">عرض</button></td>
+      <td><button class="danger" data-del-att="${idx}">حذف</button></td>`;
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll("[data-view-att]").forEach(b=>b.onclick=()=>{
+    const a=attendance[+b.dataset.viewAtt]; const abs=(a.records||[]).filter(r=>r.status==='absent').map(r=>r.student);
+    appAlert(`القسم: ${a.class}\nالتاريخ: ${a.date}\nالحصة: ${a.period||'—'}\nالمادة: ${a.subject||'—'}\n\nالغائبون:\n${abs.length?abs.join(", "):"لا أحد"}`,'تفاصيل الغياب');
+  });
+  tbody.querySelectorAll("[data-del-att]").forEach(b=>b.onclick=()=>deleteAttendance(+b.dataset.delAtt));
+}
+
+/* ===== Parent grades (no empty table) ===== */
+function renderParentGrades(){
+  const tbody=$("#tbody-parent-grades"),
+        table=$("#parent-grades-table"),
+        wrap=$("#parent-grades-wrapper"),
+        emptyMsg=$("#parent-grades-empty");
+  if(!tbody||!table||!wrap||!emptyMsg) return;
+  tbody.innerHTML="";
+  const code=localStorage.getItem('sessionCode') || $("#universal-code").value, p=parents.find(x=>x.code===code);
+  if(!p){ wrap.style.display="none"; emptyMsg.style.display=""; emptyMsg.textContent="سجّل الدخول بحساب الوليّ."; return; }
+  const list=(scores||[]).filter(s=>s.student===p.name);
+  if(!list.length){
+    wrap.style.display="none";
+    emptyMsg.style.display="";
+    emptyMsg.textContent="لا نقط بعد.";
+    return;
+  }
+  emptyMsg.style.display="none";
+  wrap.style.display="block";
+  list.forEach(s=>{ const tr=document.createElement("tr"); ["subject","exam","term","value"].forEach(k=>{ const td=document.createElement("td"); td.textContent=s[k]??""; tr.appendChild(td);}); tbody.appendChild(tr);});
+}
+
+/* ===== Render All ===== */
+function renderAll(){
+  populateSubjects(); updateClassesDropdown(); renderClassesTable();
+  renderTeachers(); renderParents(); renderTasks(); renderScores();
+  renderParentTasks(); renderParentNotifs(); renderParentGrades();
+  renderParentDayNav(); renderParentDailySchedule();
+  renderTTEditor(); setTTUIState();
+  renderAdminStats();
+  renderTeacherNotifs();
+
+  if(currentTeacher){
+    updateTeacherTaskClass();
+    const s=$("#score-class"); if(s && !s.value && currentTeacher.classes?.length){ s.value=currentTeacher.classes[0]; }
+    updateScoreStudentOptions();
+    updateNotifyClass();
+
+    const sel=$("#att-class"); if(sel){ sel.innerHTML=""; (currentTeacher.classes||[]).forEach(c=>{const o=document.createElement("option");o.value=c;o.textContent=c;sel.appendChild(o)}); if(!sel.value&&sel.options.length) sel.value=sel.options[0].value; }
+    const d=$("#att-date"); if(d){ if(!d.value) d.value=todayStr(); d.onchange=renderAttStudents; }
+    populateAttPeriodSelect(); renderAttStudents(); renderTeacherAttendanceTable();
+  }
+}
+function initialRender(){ renderAll(); }
+
+/* ===== Admin buttons ===== */
+$("#btn-add-class-top")?.addEventListener('click',async()=>{
+  const v=norm($("#input-class-name").value);
+  if(!v){showToast("أدخل اسم القسم");return;}
+  if(isNumericOnly(v)){showToast("اسم القسم لا يمكن أن يكون رقمياً فقط");return;}
+  if((classes||[]).some(c=>c.toLowerCase()===v.toLowerCase())){showToast("القسم موجود");return;}
+  classes.push(v); ensureTT(v); $("#input-class-name").value=""; await writeAll(); showToast("✅ تمت الإضافة"); renderClassesTable(); renderAdminStats();
+});
+$("#btn-add-teacher")?.addEventListener('click',async()=>{
+  const name=norm($("#input-teacher-name").value), subject=$("#select-teacher-subject").value, sel=$("#select-teacher-classes");
+  const cl=Array.from(sel.selectedOptions).map(o=>o.value);
+  if(!name||!subject||!cl.length){showToast("املأ كل الحقول");return;}
+  teachers.push({name,subject,classes:cl,code:(Math.random().toString(36).slice(2,7)).toUpperCase()});
+  $("#input-teacher-name").value=""; sel.selectedIndex=-1; updateSelectedTeacherClassesSummary();
+  await writeAll(); showToast("تمت إضافة الأستاذ"); renderTeachers(); renderAdminStats();
+});
+$("#btn-send-notification-teachers")?.addEventListener('click',async()=>{
+  const msg=norm($("#textarea-notification-teachers").value); if(!msg){showToast("اكتب نص الإشعار");return;}
+  notificationsTeachers.push({type:'broadcast',message:msg,ts:now()});
+  $("#textarea-notification-teachers").value=""; await writeAll(); showToast("تم إرسال الإشعار للأساتذة"); renderTeacherNotifs();
+});
+$("#btn-send-notification-parents")?.addEventListener('click',async()=>{
+  const msg=norm($("#textarea-notification-parents").value); if(!msg){showToast("اكتب نص الإشعار");return;}
+  notificationsParents.push({type:'broadcast',message:msg,ts:now()});
+  $("#textarea-notification-parents").value=""; await writeAll(); showToast("تم إرسال الإشعار للأولياء"); renderParentNotifs(); updateParentBadges();
+});
+$("#btn-add-class")?.addEventListener('click',async()=>{
+  const v=norm($("#tt-new-class").value);
+  if(!v){showToast("أدخل اسم القسم");return;}
+  if(isNumericOnly(v)){showToast("الاسم لا يكون رقمياً فقط");return;}
+  if(!classes.includes(v)) classes.push(v); ensureTT(v);
+  $("#tt-new-class").value=""; await writeAll(); $("#tt-class").value=v; setTTUIState(); renderClassesTable(); renderAdminStats(); showToast("تمت الإضافة");
+});
+$("#btn-tt-save")?.addEventListener('click',async()=>{ const cls=$("#tt-class").value; if(!cls){showToast("اختر قسماً");return;} collectTTFromEditor(); await writeAll(); showToast("تم حفظ استعمال الزمن"); });
+$("#btn-tt-clear")?.addEventListener('click',async()=>{ const cls=$("#tt-class").value; if(!cls){showToast("اختر قسماً");return;} ensureTT(cls); days.forEach(d=>periods.forEach(p=>timetables[cls][d][p]="")); await writeAll(); showToast("تم إفراغ الجدول"); });
+$("#btn-tt-fullscreen")?.addEventListener('click',()=>{
+  const el=document.documentElement;
+  if(el.requestFullscreen) el.requestFullscreen();
+  else if(el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+  else if(el.msRequestFullscreen) el.msRequestFullscreen();
+});
+
+/* ===== Teacher events ===== */
+function updateNotifyClass(){
+  const sel=$("#notify-class"); if(!sel||!currentTeacher) return;
+  sel.innerHTML=""; (currentTeacher.classes||[]).forEach(c=>{const o=document.createElement("option");o.value=c;o.textContent=c;sel.appendChild(o);});
+  if(!sel.value && sel.options.length) sel.value=sel.options[0].value;
+  updateNotifyStudentOptions();
+}
+function updateNotifyStudentOptions(){
+  const cls=$("#notify-class")?.value, sel=$("#notify-student"); if(!sel) return;
+  sel.innerHTML='<option value="">— اختر التلميذ —</option>';
+  if(!currentTeacher||!cls) return;
+  (parents||[]).filter(p=>p.class===cls).forEach(p=>{const o=document.createElement("option");o.value=p.name;o.textContent=p.name;sel.appendChild(o);});
+}
+$("#notify-class")?.addEventListener('change', updateNotifyStudentOptions);
+
+$("#btn-add-task")?.addEventListener('click',async()=>{
+  if(!currentTeacher){showToast("🔑 أدخل بحساب الأستاذ");return;}
+  const cls=$("#select-task-class").value, msg=norm($("#textarea-task-message").value);
+  if(!cls||!msg){showToast("املأ القسم ونص الإشعار");return;}
+  tasks.push({class:cls,message:msg,ts:now(),teacherCode: currentTeacher.code});
+  $("#textarea-task-message").value=""; await writeAll(); showToast("تم إرسال الإشعار"); renderTasks(); renderParentTasks();
+});
+$("#btn-notify-student")?.addEventListener('click',async()=>{
+  if(!currentTeacher){showToast("🔑 أدخل بحساب الأستاذ");return;}
+  const cls=$("#notify-class").value, st=$("#notify-student").value, msg=norm($("#notify-message").value);
+  if(!cls||!st||!msg){showToast("املأ القسم والتلميذ ونص الإشعار");return;}
+  tasks.push({class:cls, student:st, message:msg, ts:now(), teacherCode: currentTeacher.code});
+  $("#notify-message").value=""; $("#notify-student").value="";
+  await writeAll(); showToast("تم إرسال الإشعار للتلميذ"); renderTasks(); renderParentTasks(); updateParentBadges();
+});
+
+$("#btn-add-score")?.addEventListener('click',async()=>{
+  if(!currentTeacher){showToast("🔑 يجب الدخول كأستاذ");return;}
+  const cls=$("#score-class").value, students=Array.from($("#score-student").selectedOptions).map(o=>o.value);
+  const exam=$("#score-exam").value, term=$("#score-term").value, val=parseFloat($("#score-val").value);
+  if(!cls||!students.length||!exam||!term||isNaN(val)){showToast("املأ جميع الحقول");return;}
+  students.forEach(st=>scores.push({class:cls,student:st,subject:currentTeacher.subject,exam,term,value:val,teacherCode:currentTeacher.code,ts:now()}));
+  $("#score-val").value=""; await writeAll(); renderScores(); renderParentGrades(); showToast("✅ تمت إضافة النقطة");
+});
+
+/* Attendance quick */
+$("#btn-att-all-present")?.addEventListener('click',()=>{document.querySelectorAll('#att-students-body tr').forEach(tr=>{const n=tr.querySelector('.att-radio')?.getAttribute('name');document.querySelector(`input[name="${n}"][value="present"]`)?.click();});});
+$("#btn-att-all-absent")?.addEventListener('click',()=>{document.querySelectorAll('#att-students-body tr').forEach(tr=>{const n=tr.querySelector('.att-radio')?.getAttribute('name');document.querySelector(`input[name="${n}"][value="absent"]`)?.click();});});
+$("#btn-att-save")?.addEventListener('click',async()=>{
+  if(!currentTeacher){showToast("🔑 يجب الدخول كأستاذ");return;}
+  const cls=$("#att-class")?.value, d=$("#att-date")?.value||todayStr(), per=$("#att-period")?.value||periods[0];
+  if(!cls||!d||!per){showToast("اختر القسم والتاريخ والحصة");return;}
+  const recs=[]; document.querySelectorAll('#att-students-body tr').forEach(tr=>{const row=tr.querySelector('.att-radio')?.getAttribute('name'); const checked=row?document.querySelector(`input[name="${row}"]:checked`):null; recs.push({student:tr.dataset.student,status:checked?checked.value:'present'});});
+  attendance=(attendance||[]).filter(a=>!(a.teacherCode===currentTeacher.code && a.class===cls && a.date===d && a.period===per));
+  attendance.push({teacherCode:currentTeacher.code,class:cls,date:d,period:per,subject:currentTeacher.subject,records:recs,ts:dateToTs(d)||now()});
+  notificationsParents=(notificationsParents||[]).filter(n=>!(n?.type==='absence' && n.teacherCode===currentTeacher.code && n.class===cls && n.date===d && n.period===per));
+  recs.filter(r=>r.status==='absent').forEach(st=>{
+    notificationsParents.push({type:'absence', student:st.student, class:cls, date:d, period:per, subject:currentTeacher.subject||'', teacherCode:currentTeacher.code, ts:now()});
+  });
+  await writeAll(); showToast("📝 تم تسجيل الغياب"); renderTeacherAttendanceTable(); renderParentNotifs(); updateParentBadges();
+});
+
+/* ===== Delete/Edit helpers ===== */
+async function deleteTeacher(i){ if(await appConfirm("حذف الأستاذ؟")){ teachers.splice(i,1); await writeAll(); renderTeachers(); renderClassesTable(); renderAdminStats(); } }
+async function deleteParent(i){ if(await appConfirm("حذف التلميذ؟")){ parents.splice(i,1); await writeAll(); renderParents(); renderClassesTable(); renderAdminStats(); } }
+async function deleteScore(i){ if(await appConfirm("حذف النقطة؟")){ scores.splice(i,1); await writeAll(); renderScores(); renderParentGrades(); } }
+async function deleteTask(i){ if(await appConfirm("حذف الإشعار؟")){ tasks.splice(i,1); await writeAll(); renderTasks(); } }
+async function deleteAttendance(i){ if(await appConfirm("حذف سجل الغياب؟")){ attendance.splice(i,1); await writeAll(); renderTeacherAttendanceTable(); } }
+async function editTeacher(i){ const t=teachers[i]; const n=await appPrompt("اسم الأستاذ:", t.name); if(n!==null){ t.name=n; await writeAll(); renderTeachers(); } }
+async function editScore(i){ const s=scores[i]; const v=await appPrompt("النقطة الجديدة:", String(s.value)); if(v!==null&&v!==""){ s.value=v; await writeAll(); renderScores(); renderParentGrades(); } }
+
+/* ===== Login / Logout ===== */
+function fillTeacherWelcome(t){
+  $("#span-teacher-name").textContent=t?.name||'';
+  $("#span-teacher-subject").textContent=t?.subject||'';
+  $("#span-teacher-classes").textContent=Array.isArray(t?.classes)?t.classes.join('، '):'';
+}
+async function doLogin(){
+  const code=norm($("#universal-code")?.value||"");
+  $("#init-msg")?.remove();
+  if(!code){showToast("🗝️ دخّل الكود");return;}
+  if(!dataReady){ try{ await loadOnce(); }catch(e){} }
+
+  if(code==="admin123"){
+    localStorage.setItem('sessionRole','admin'); localStorage.setItem('sessionCode','admin123'); showPanel('admin'); greetOnce('admin123','المدير'); return;
+  }
+  const t=(teachers||[]).find(x=>x.code===code);
+  if(t){
+    currentTeacher=t; localStorage.setItem('sessionRole','teacher'); localStorage.setItem('sessionCode',code);
+    showPanel('teacher'); fillTeacherWelcome(t); renderAll(); greetOnce(code,`الأستاذ ${t.name}`);
+    return;
+  }
+  const p=(parents||[]).find(x=>x.code===code);
+  if(p){
+    localStorage.setItem('sessionRole','parent'); localStorage.setItem('sessionCode',code);
+    $("#span-parent-name").textContent=p.name; $("#span-parent-class").textContent=p.class;
+    parentDayDate=new Date(); skipSundayInit(); // ⬅️ تفادي الأحد عند الدخول
+    showPanel('parent'); renderAll(); updateParentBadges(); greetOnce(code,`${p.name}`);
+    return;
+  }
+  showToast("كود غير صحيح");
+}
+function greetOnce(code, nameTxt){
+  const k='firstSeen_'+code;
+  if(!localStorage.getItem(k)){
+    localStorage.setItem(k,'1');
+    showToast(`مرحباً ${nameTxt}! 👋`);
+  }
+}
+function doLogout(){
+  currentTeacher=null; localStorage.removeItem('sessionRole'); localStorage.removeItem('sessionCode');
+  $("#universal-code").value=''; showPanel('login'); showToast("↩️ تم تسجيل الخروج");
+}
+$("#btn-logout")?.addEventListener('click', doLogout);
+$("#btn-universal-login")?.addEventListener('click', doLogin);
+$("#universal-code")?.addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
+
+function showPanel(p){ ["panel-login","panel-admin","panel-teacher","panel-parent"].forEach(id=>{$(`#${id}`).style.display="none"}); $(`#panel-${p}`).style.display="block"; $("#btn-logout").style.display=(p==='login')?'none':'inline-flex'; }
+$("#score-class")?.addEventListener('change',()=>{updateScoreStudentOptions();renderScores();});
+$("#tt-class")?.addEventListener('change', setTTUIState);
+
+/* Accordion toggle */
+document.addEventListener('click', function(ev){
+  let node = ev.target;
+  while (node && !node.classList.contains('accordion-header')) { node = node.parentElement; }
+  if (node && node.classList.contains('accordion-header')) {
+    const acc = node.parentElement;
+    if (acc) acc.classList.toggle('active');
+  }
+});
+
+/* Boot */
+attachRealtime(); loadOnce(); populateSubjects();
+</script>
+</body>
+</html>
